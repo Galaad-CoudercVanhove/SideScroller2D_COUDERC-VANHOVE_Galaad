@@ -1,0 +1,547 @@
+<!doctype html> 
+<html lang="en"> 
+<head> 
+    <meta charset="UTF-8" />
+    <title>Making your first Phaser 3 Game - Part 10</title>
+    <script src="//cdn.jsdelivr.net/npm/phaser@3.11.0/dist/phaser.js"></script>
+    <style type="text/css">
+        body {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+<script type="text/javascript">
+
+var config = {
+    type: Phaser.AUTO,
+    width: 1280,
+    height: 720,
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false
+        }
+    },
+    scene: {
+        preload: preload,
+        create: create,
+        update: update
+    }
+};
+
+var player;
+var wallLayer;
+var porteLayer;
+var cursors;
+var gameOver = false;
+var monster;
+var vie = 3;
+var coeur1;
+var coeur2;
+var coeur3;
+
+var game = new Phaser.Game(config);
+
+function preload ()
+{
+    this.load.tilemapTiledJSON('Wall', 'assets/map.json');
+    this.load.image('tiles', 'assets/background.png');
+    this.load.image('coeur1', 'assets/coeur1.png');
+    this.load.image('coeur2', 'assets/coeur2.png');
+    this.load.image('coeur3', 'assets/coeur3.png');
+    this.load.spritesheet('dude', 'assets/dude.png', { frameWidth: 32, frameHeight: 48 });
+    this.load.spritesheet('monster', 'assets/monster.png', { frameWidth: 100, frameHeight: 50 });
+    this.load.spritesheet('levier', 'assets/levier.png', { frameWidth: 32, frameHeight: 64 });
+}
+
+function create ()
+{
+    //caméra
+    this.cameras.main.setBounds(0, 0,1280*5,720*5);
+    this.physics.world.setBounds(0, 0, 1280 * 5, 720 * 5);
+
+    //  Paramètres map Tiled 
+    const map = this.make.tilemap({ key: 'Wall' });
+    const tileset = map.addTilesetImage('Wall', 'tiles');
+
+    map.createStaticLayer('BackGround', tileset);
+    wallLayer = map.createStaticLayer('Walls', tileset);
+    porteLayer = map.createStaticLayer('Porte', tileset);
+
+    wallLayer.setCollisionByExclusion(-1,true);
+    porteLayer.setCollisionByExclusion(-1,true);
+
+
+    levier = this.add.sprite(350, 1900, 'levier');
+    
+    // The player and its settings
+    player = this.physics.add.sprite(200, 3000, 'dude');
+
+    // The monster and its settings
+    monster = this.physics.add.sprite(200, 2750, 'monster');
+    monster2 = this.physics.add.sprite(1600, 3000, 'monster');
+    monster3 = this.physics.add.sprite(2000, 2500, 'monster');
+    monster4 = this.physics.add.sprite(2200, 2200, 'monster');
+    monster5 = this.physics.add.sprite(1700, 2500, 'monster');
+    monster6 = this.physics.add.sprite(1100, 2300, 'monster');
+    monster7 = this.physics.add.sprite(750, 2200, 'monster');
+
+    //  Player physics properties. Give the little guy a slight bounce.
+    player.setBounce(0.2);
+    player.setCollideWorldBounds(true);
+
+    //////////////////////////////////
+    // animation levier
+    //////////////////////////////////
+    
+    this.anims.create({
+        key: 'activer',
+        frames: [ { key: 'levier', frame: 1 } ],
+        frameRate: 20
+    });
+
+    /////////////////////////////
+    // animation player
+    /////////////////////////////
+
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('dude', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'turn',
+        frames: [ { key: 'dude', frame: 4 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('dude', { start: 5, end: 8 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    
+    this.anims.create({
+        key: 'jetpack2',
+        frames: this.anims.generateFrameNumbers('dude', { start: 9, end: 11 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'jetpack3',
+        frames: this.anims.generateFrameNumbers('dude', { start: 15, end: 17 }),
+        frameRate: 10,
+        repeat: -1
+    });
+    
+    this.anims.create({
+        key: 'jetpack',
+        frames: this.anims.generateFrameNumbers('dude', { start: 12, end: 14 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    ////////////////////////////////
+    // animation monstres
+    ////////////////////////////////
+
+    this.anims.create({
+        key: 'monsterMove',
+        frames: this.anims.generateFrameNumbers('monster', { start: 0, end: 2 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    //  Input Events
+    cursors = this.input.keyboard.createCursorKeys();
+
+    //  Collisions
+
+    this.physics.add.collider(player, wallLayer);
+    this.physics.add.collider(player, porteLayer);
+    this.physics.add.collider(monster, wallLayer);
+    this.physics.add.collider(monster2, wallLayer);
+    this.physics.add.collider(monster3, wallLayer);
+    this.physics.add.collider(monster4, wallLayer);
+    this.physics.add.collider(monster5, wallLayer);
+    this.physics.add.collider(monster6, wallLayer);
+    this.physics.add.collider(monster7, wallLayer);
+    this.physics.add.collider(levier, wallLayer);
+
+    
+    // colision joueur - monstre
+    this.physics.add.collider(player, monster, hitMonster, null, this);
+    this.physics.add.collider(player, monster2, hitMonster, null, this);
+    this.physics.add.collider(player, monster3, hitMonster, null, this);
+    this.physics.add.collider(player, monster4, hitMonster, null, this);
+    this.physics.add.collider(player, monster5, hitMonster, null, this);
+    this.physics.add.collider(player, monster6, hitMonster, null, this);
+    this.physics.add.collider(player, monster7, hitMonster, null, this);
+
+//    this.physics.add.collider(player, levier, activerLevier, null, this);
+
+    //follow caméra
+    this.cameras.main.startFollow(player, true, 0.05, 0.05);
+    this.cameras.main.setZoom(1.5);
+}
+
+function update ()
+{
+    /////////////////////////////////
+    // déplacements player
+    /////////////////////////////////
+
+    if (gameOver)
+    {
+        return;
+    }
+
+    if (cursors.left.isDown)
+    {
+        player.setVelocityX(-160);
+
+        player.anims.play('left', true);
+    }
+    else if (cursors.right.isDown)
+    {
+        player.setVelocityX(160);
+
+        player.anims.play('right', true);
+    }
+    else
+    {
+        player.setVelocityX(0);
+
+        player.anims.play('turn');
+    }
+
+
+     if (cursors.up.isDown)
+    {
+        player.setVelocityY(-250);
+        if (cursors.right.isDown){
+            player.anims.play('jetpack2');
+        }
+        else if (cursors.left.isDown){
+            player.anims.play('jetpack3');
+        }
+        else {
+            player.anims.play('jetpack');
+        }
+    }
+    
+    if (cursors.down.isDown)
+    {
+        player.setVelocityY(300);
+    }
+
+
+    /////////////////////////////////////
+    // levier temporaire
+    /////////////////////////////////////
+
+    if (cursors.space.isDown)
+    {
+        levier.anims.play('activer');
+    }
+    
+    ///////////////////////////////////////
+    // déplacements monstre 1
+    ///////////////////////////////////////
+
+    if (monster.body.blocked.right) {
+        monster.direction = 'LEFT';
+    }
+
+    if (monster.body.blocked.left) {
+        monster.direction = 'RIGHT';
+    }
+
+    if (monster.direction === 'RIGHT') {
+        monster.setVelocityX(100);
+        monster.setFlipX(false);
+        monster.anims.play("monsterMove", true);
+    }
+    else{
+        monster.setVelocityX(-100);
+        monster.setFlipX(true);
+        monster.anims.play("monsterMove", true);
+    }
+
+    ///////////////////////////////////////
+    // déplacements monstre 2
+    ///////////////////////////////////////
+
+    if (monster2.body.blocked.right) {
+        monster2.direction = 'LEFT';
+    }
+
+    if (monster2.body.blocked.left) {
+        monster2.direction = 'RIGHT';
+    }
+
+    if (monster2.direction === 'RIGHT') {
+        monster2.setVelocityX(100);
+        monster2.setFlipX(false);
+        monster2.anims.play("monsterMove", true);
+    }
+    else{
+        monster2.setVelocityX(-100);
+        monster2.setFlipX(true);
+        monster2.anims.play("monsterMove", true);
+    }
+
+    ///////////////////////////////////////
+    // déplacements monstre 3
+    ///////////////////////////////////////
+
+    if (monster3.body.blocked.right) {
+        monster3.direction = 'LEFT';
+    }
+
+    if (monster3.body.blocked.left) {
+        monster3.direction = 'RIGHT';
+    }
+
+    if (monster3.direction === 'RIGHT') {
+        monster3.setVelocityX(100);
+        monster3.setFlipX(false);
+        monster3.anims.play("monsterMove", true);
+    }
+    else{
+        monster3.setVelocityX(-100);
+        monster3.setFlipX(true);
+        monster3.anims.play("monsterMove", true);
+    }
+
+    ///////////////////////////////////////
+    // déplacements monstre 4
+    ///////////////////////////////////////
+
+    if (monster4.body.blocked.right) {
+        monster4.direction = 'LEFT';
+    }
+
+    if (monster4.body.blocked.left) {
+        monster4.direction = 'RIGHT';
+    }
+
+    if (monster4.direction === 'RIGHT') {
+        monster4.setVelocityX(100);
+        monster4.setFlipX(false);
+        monster4.anims.play("monsterMove", true);
+    }
+    else{
+        monster4.setVelocityX(-100);
+        monster4.setFlipX(true);
+        monster4.anims.play("monsterMove", true);
+    }
+
+    ///////////////////////////////////////
+    // déplacements monstre 5
+    ///////////////////////////////////////
+
+    if (monster5.body.blocked.right) {
+        monster5.direction = 'LEFT';
+    }
+
+    if (monster5.body.blocked.left) {
+        monster5.direction = 'RIGHT';
+    }
+
+    if (monster5.direction === 'RIGHT') {
+        monster5.setVelocityX(100);
+        monster5.setFlipX(false);
+        monster5.anims.play("monsterMove", true);
+    }
+    else{
+        monster5.setVelocityX(-100);
+        monster5.setFlipX(true);
+        monster5.anims.play("monsterMove", true);
+    }
+
+    ///////////////////////////////////////
+    // déplacements monstre 6
+    ///////////////////////////////////////
+
+    if (monster6.body.blocked.right) {
+        monster6.direction = 'LEFT';
+    }
+
+    if (monster6.body.blocked.left) {
+        monster6.direction = 'RIGHT';
+    }
+
+    if (monster6.direction === 'RIGHT') {
+        monster6.setVelocityX(100);
+        monster6.setFlipX(false);
+        monster6.anims.play("monsterMove", true);
+    }
+    else{
+        monster6.setVelocityX(-100);
+        monster6.setFlipX(true);
+        monster6.anims.play("monsterMove", true);
+    }
+
+    ///////////////////////////////////////
+    // déplacements monstre 7
+    ///////////////////////////////////////
+
+    if (monster7.body.blocked.right) {
+        monster7.direction = 'LEFT';
+    }
+
+    if (monster7.body.blocked.left) {
+        monster7.direction = 'RIGHT';
+    }
+
+    if (monster7.direction === 'RIGHT') {
+        monster7.setVelocityX(100);
+        monster7.setFlipX(false);
+        monster7.anims.play("monsterMove", true);
+    }
+    else{
+        monster7.setVelocityX(-100);
+        monster7.setFlipX(true);
+        monster7.anims.play("monsterMove", true);
+    }
+}
+
+    ////////////////////////////////////////////
+    // Les coeurs de vie
+    ////////////////////////////////////////////
+
+/*    if(vie === 3)
+    {
+        coeur3 = this.add.image(30, 35,'coeur3') 
+            .setDepth(1)
+            .setScrollFactor(0);
+    }
+    if (vie === 2)
+    {
+        coeur3.destroy();
+        
+        coeur2=this.add.image(30, 35,'coeur2') 
+            .setDepth(1)
+            .setScrollFactor(0);
+    }
+    if(vie === 1){
+        coeur1=this.add.image(30, 35,'coeur1') 
+            .setDepth(1)
+            .setScrollFactor(0);
+    }*/
+
+
+
+/*function activerLevier (player, levier)
+{
+    levier.anims.play('activer');
+    porteLayer.destroy();
+}*/
+
+//////////////////////////////////////
+// mort par les monstres
+//////////////////////////////////////
+
+function mourir ()
+{
+    if (vie === 0){
+        gameOver = true;
+        this.physics.pause();
+        player.setTint(0xff0000);
+        player.anims.play('turn');
+    }
+}
+
+function hitMonster (player, monster)
+{
+    this.physics.pause();
+
+    player.setTint(0xff0000);
+
+    player.anims.play('turn');
+
+    vie--;
+}
+
+function hitMonster (player, monster2)
+{
+    this.physics.pause();
+
+    player.setTint(0xff0000);
+
+    player.anims.play('turn');
+
+    vie--;
+}
+
+function hitMonster (player, monster3)
+{
+    this.physics.pause();
+
+    player.setTint(0xff0000);
+
+    player.anims.play('turn');
+
+    vie--;
+}
+
+
+function hitMonster (player, monster4)
+{
+    this.physics.pause();
+
+    player.setTint(0xff0000);
+
+    player.anims.play('turn');
+
+    vie--;
+}
+
+
+function hitMonster (player, monster5)
+{
+    this.physics.pause();
+
+    player.setTint(0xff0000);
+
+    player.anims.play('turn');
+
+    vie--;
+}
+
+
+function hitMonster (player, monster6)
+{
+    this.physics.pause();
+
+    player.setTint(0xff0000);
+
+    player.anims.play('turn');
+
+    vie--;
+}
+
+function hitMonster (player, monster7)
+{
+    this.physics.pause();
+
+    player.setTint(0xff0000);
+
+    player.anims.play('turn');
+
+    vie--;
+}
+
+
+</script>
+
+</body>
+</html>
