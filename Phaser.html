@@ -88,6 +88,8 @@ function create ()
     monster5 = this.physics.add.sprite(1700, 2500, 'monster');
     monster6 = this.physics.add.sprite(1100, 2300, 'monster');
     monster7 = this.physics.add.sprite(750, 2200, 'monster');
+    monster8 = this.physics.add.sprite(2800, 2700, 'monster');
+    monster9 = this.physics.add.sprite(2800, 2300, 'monster');
 
     //  Player physics properties. Give the little guy a slight bounce.
     player.setBounce(0.2);
@@ -164,8 +166,8 @@ function create ()
 
     //  Collisions
 
-    this.physics.add.collider(player, wallLayer);
-    this.physics.add.collider(player, porteLayer);
+    //this.physics.add.collider(player, wallLayer);
+    //this.physics.add.collider(player, porteLayer);
     this.physics.add.collider(monster, wallLayer);
     this.physics.add.collider(monster2, wallLayer);
     this.physics.add.collider(monster3, wallLayer);
@@ -173,6 +175,8 @@ function create ()
     this.physics.add.collider(monster5, wallLayer);
     this.physics.add.collider(monster6, wallLayer);
     this.physics.add.collider(monster7, wallLayer);
+    this.physics.add.collider(monster8, wallLayer);
+    this.physics.add.collider(monster9, wallLayer);
     this.physics.add.collider(levier, wallLayer);
 
     
@@ -184,6 +188,8 @@ function create ()
     this.physics.add.collider(player, monster5, hitMonster, null, this);
     this.physics.add.collider(player, monster6, hitMonster, null, this);
     this.physics.add.collider(player, monster7, hitMonster, null, this);
+    this.physics.add.collider(player, monster8, hitMonster, null, this);
+    this.physics.add.collider(player, monster9, hitMonster, null, this);
 
 //    this.physics.add.collider(player, levier, activerLevier, null, this);
 
@@ -412,6 +418,52 @@ function update ()
         monster7.setFlipX(true);
         monster7.anims.play("monsterMove", true);
     }
+
+    ///////////////////////////////////////
+    // déplacements monstre 8
+    ///////////////////////////////////////
+
+    if (monster8.body.blocked.right) {
+        monster8.direction = 'LEFT';
+    }
+
+    if (monster8.body.blocked.left) {
+        monster8.direction = 'RIGHT';
+    }
+
+    if (monster8.direction === 'RIGHT') {
+        monster8.setVelocityX(100);
+        monster8.setFlipX(false);
+        monster8.anims.play("monsterMove", true);
+    }
+    else{
+        monster8.setVelocityX(-100);
+        monster8.setFlipX(true);
+        monster8.anims.play("monsterMove", true);
+    }
+
+    ///////////////////////////////////////
+    // déplacements monstre 9
+    ///////////////////////////////////////
+
+    if (monster9.body.blocked.right) {
+        monster9.direction = 'LEFT';
+    }
+
+    if (monster9.body.blocked.left) {
+        monster9.direction = 'RIGHT';
+    }
+
+    if (monster9.direction === 'RIGHT') {
+        monster9.setVelocityX(100);
+        monster9.setFlipX(false);
+        monster9.anims.play("monsterMove", true);
+    }
+    else{
+        monster9.setVelocityX(-100);
+        monster9.setFlipX(true);
+        monster9.anims.play("monsterMove", true);
+    }
 }
 
     ////////////////////////////////////////////
@@ -530,6 +582,28 @@ function hitMonster (player, monster6)
 }
 
 function hitMonster (player, monster7)
+{
+    this.physics.pause();
+
+    player.setTint(0xff0000);
+
+    player.anims.play('turn');
+
+    vie--;
+}
+
+function hitMonster (player, monster8)
+{
+    this.physics.pause();
+
+    player.setTint(0xff0000);
+
+    player.anims.play('turn');
+
+    vie--;
+}
+
+function hitMonster (player, monster9)
 {
     this.physics.pause();
 
